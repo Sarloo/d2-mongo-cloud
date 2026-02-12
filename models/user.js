@@ -1,42 +1,8 @@
-const express = require('express');
-const connectDB = require('./db');
-const User = require('./models/User');
+const mongoose = require('mongoose');
 
-const app = express();
-const PORT = process.env.PORT || 5000;
-
-connectDB();
-app.use(express.json());
-
-const ensureCarlosUser = async () => {
-    await User.updateOne(
-        { email: 'carlos@gmail.com' },
-        { $setOnInsert: { name: 'CARLOS', email: 'carlos@gmail.com' } },
-        { upsert: true }
-    );
-};
-
-app.get('/', async (req, res) => {
-    await ensureCarlosUser();
-    const carlos = await User.findOne({ email: 'carlos@gmail.com' });
-    res.send(`Usuario en BD: ${carlos.name} (${carlos.email})`);
+const userSchema = new mongoose.Schema({
+    name: String,
+    email: String,
 });
 
-app.post('/api/users', async (req, res) => {
-    const user = await User.create(req.body);
-    res.status(201).json(user);
-});
-
-app.get('/api/users', async (req, res) => {
-    await ensureCarlosUser();
-    const users = await User.find();
-    res.json(users);
-});
-
-if (!process.env.VERCEL) {
-    app.listen(PORT, () => {
-        console.log(`Server running on ${PORT}`);
-    });
-}
-
-module.exports = app;
+module.exports = mongoose.model('User', userSchema);
