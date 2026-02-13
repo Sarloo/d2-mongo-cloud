@@ -17,20 +17,35 @@ const ensureCarlosUser = async () => {
 };
 
 app.get('/', async (req, res) => {
-    await ensureCarlosUser();
-    const carlos = await User.findOne({ email: 'carlos@demo.com' });
-    res.send(`Usuario: ${carlos.name} (${carlos.email})`);
+    try {
+        await ensureCarlosUser();
+        const carlos = await User.findOne({ email: 'carlos@demo.com' });
+        res.send(`Usuario: ${carlos.name} (${carlos.email})`);
+    } catch (error) {
+        res.status(500).json({ msg: 'Error fetching user data' });
+    }
 });
 
 app.post('/api/users', async (req, res) => {
-    const user = await User.create(req.body);
-    res.status(201).json(user);
+    try {
+        const user = await User.create(req.body);
+        res.status(201).json(user);
+    } catch (error) {
+        if (error.code === 11000) {
+            return res.status(409).json({ msg: 'Email already exists' });
+        }
+        return res.status(400).json({ msg: 'Invalid user data' });
+    }
 });
 
 app.get('/api/users', async (req, res) => {
-    await ensureCarlosUser();
-    const users = await User.find();
-    res.json(users);
+    try {
+        await ensureCarlosUser();
+        const users = await User.find();
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ msg: 'Error fetching users' });
+    }
 });
 
 if (!process.env.VERCEL) {
